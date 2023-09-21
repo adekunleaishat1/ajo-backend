@@ -1,22 +1,23 @@
 const usermodel = require("../models/usermodel");
 const { cloudinary } = require("../utils/cloudinary");
 const contributionmodel = require("../models/contributionmodel");
+const tokenmodel = require("../models/tokenmodel");
 const { generateToken, verifyToken } = require("../services/sessionservices");
 const bcryptjs = require("bcryptjs");
 const paystackSecret = process.env.PAYSTACK_SECRET;
 const paystack = require("paystack");
 const axios = require("axios");
+const { generateCode } = require("../utils/generator");
+const { forgotpasswordmail } = require("../utils/mailer");
 
 const signup = async (req, res, next) => {
   try {
     const { username, email, password, bvn } = req.body;
     if (username === "" || email === "" || password === "" || bvn === "") {
-      return res
-        .status(400)
-        .send({
-          message: "username, email, password or bvn must not be empty",
-          status: false,
-        });
+      return res.status(400).send({
+        message: "username, email, password or bvn must not be empty",
+        status: false,
+      });
     }
     const existingdetails = await usermodel.findOne({
       $or: [
@@ -27,21 +28,17 @@ const signup = async (req, res, next) => {
       ],
     });
     if (existingdetails) {
-      return res
-        .status(409)
-        .send({
-          message: "email or username is already in use",
-          status: false,
-        });
+      return res.status(409).send({
+        message: "email or username is already in use",
+        status: false,
+      });
     }
     const result = await usermodel.create({ username, email, password, bvn });
     if (!result) {
-      return res
-        .status(500)
-        .send({
-          message: "Error creating your acount ,try again ",
-          status: false,
-        });
+      return res.status(500).send({
+        message: "Error creating your acount ,try again ",
+        status: false,
+      });
     }
     return res
       .status(201)
@@ -75,12 +72,10 @@ const contributor_signup = async (req, res, next) => {
       contributionname: contributionname,
     });
     if (existingcontribution) {
-      return res
-        .status(404)
-        .send({
-          message: "Account already existed, try creating another one",
-          status: false,
-        });
+      return res.status(404).send({
+        message: "Account already existed, try creating another one",
+        status: false,
+      });
     }
     const newimage = await cloudinary.uploader.upload(image);
 
@@ -97,50 +92,75 @@ const contributor_signup = async (req, res, next) => {
       nopeople,
       image: newimage.secure_url,
       admin: email,
-      members:[{
-        username: newAdmin,
-        amount:0 ,
-      }]
+      peopleJoined: 1,
+      members: [
+        {
+          username: newAdmin,
+          amount: 0,
+        },
+      ],
     });
     if (!newcontribution) {
-      return res
-        .status(409)
-        .send({
-          message: "Error creating contribution , try again",
-          status: false,
-        });
-    }
-    // const result = await contributionmodel.updateOne(
-    //   { email },
-    //   { $push: { members: { username: newAdmin, amount: 0 } } }
-    // );
-    const contributionLink = `https://localhost:3000/user/contribution/${newcontribution._id}`;
-
-    return res
-      .status(202)
-      .send({
-        message: "Contribution created successfully",
-        status: true,
-        contributionLink,
+      return res.status(409).send({
+        message: "Error creating contribution , try again",
+        status: false,
       });
+    }
+    const result = await contributionmodel.updateOne(
+      { email },
+      { $push: { members: { username: newAdmin, amount: 0 } } }
+    );
+    const contributionLink = `http://localhost:3000/dashboard/group/onegroup/${newcontribution._id}`;
+
+    return res.status(202).send({
+      message: "Contribution created successfully",
+      status: true,
+      contributionLink,
+    });
   } catch (error) {
     console.log(error);
     next(error);
   }
 };
+
 const getContribution = async (req, res, next) => {
-  const contributionId = req.params.contributionId;
+  const contributionId = req.params.id;
   try {
-    const contribution = await contributionmodel.findById(contributionId);
+    const contribution = await contributionmodel.findById({
+      _id: contributionId,
+    });
     if (!contribution) {
       return res
         .status(404)
         .send({ message: "Contribution not found", status: false });
     }
-
     return res
       .status(200)
-      .send({ message: "contribution fetched successfully" });
+      .send({ message: "contribution fetched successfully", contribution });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+const getallContribution = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    const email = verifyToken(token);
+    const Allcontribution = await contributionmodel.find({
+      admin: email,
+    });
+    console.log(Allcontribution);
+    if (Allcontribution.length === 0) {
+      return res
+        .status(200)
+        .send({ message: "No contribution found", status: false });
+    }
+    return res.status(200).send({
+      message: "contribution fetched successfully",
+      Allcontribution,
+      status: true,
+    });
   } catch (error) {
     console.log(error);
     next(error);
@@ -159,12 +179,10 @@ const signin = async (req, res, next) => {
       $or: [{ email: email }, { username: username }],
     });
     if (!result) {
-      return res
-        .status(404)
-        .send({
-          message: "Account does not exist, try creating one",
-          status: false,
-        });
+      return res.status(404).send({
+        message: "Account does not exist, try creating one",
+        status: false,
+      });
     }
     const compare = await bcryptjs.compare(password, result.password);
     console.log(password);
@@ -224,12 +242,10 @@ const verifytokenLink =
           .send({ message: "The link is not valid", status: false });
       }
       if (contribution.peopleJoined >= contribution.nopeople) {
-        return res
-          .status(403)
-          .send({
-            message: "Thrift is full, the link is no longer valid",
-            status: false,
-          });
+        return res.status(403).send({
+          message: "Thrift is full, the link is no longer valid",
+          status: false,
+        });
       }
       const user = await usermodel.findOne({ username });
       if (!user) {
@@ -272,12 +288,10 @@ const payment = async (req, res, next) => {
       paymentResponse.data.data.status !== "success" ||
       paymentResponse.data.data.amount !== amount
     ) {
-      return res
-        .status(402)
-        .send({
-          message: "Payment required, Please complete this payment ",
-          status: false,
-        });
+      return res.status(402).send({
+        message: "Payment required, Please complete this payment ",
+        status: false,
+      });
     }
     const user = await usermodel.findOne({ email });
     if (!user) {
@@ -289,42 +303,92 @@ const payment = async (req, res, next) => {
       { $set: { wallet: newWallet } }
     );
 
-    return res
-      .status(200)
-      .send({
-        message: "You have successfully fund your wallet",
-        status: true,
-      });
+    return res.status(200).send({
+      message: "You have successfully fund your wallet",
+      status: true,
+    });
   } catch (error) {
     console.log(error);
     next(error);
   }
 };
-const groupUpload = async (req, res, next) => {
-  const { files } = req.body;
-  const token = req.headers.authorization?.split(" ")[1];
-  const email = verifyToken(token);
+
+const forgotPassword = async (req, res, next) => {
   try {
-    console.log(files);
-    const result = await cloudinary.uploader.upload(files);
-    console.log(result);
-    const image_url = result.secure_url;
-    const public_id = result.public_id;
-    const upload = await contributionmodel.updateOne(
-      { email },
-      { $set: { image: image_url } }
-    );
-    return res
-      .status(200)
-      .send({
-        message: "Upload successful",
-        status: true,
-        secure_url: image_url,
+    const { email } = req.body;
+    console.log(email);
+    const OTP = generateCode();
+
+    const user = await usermodel.findOne({ email: email });
+    console.log(user, OTP);
+    if (!user) {
+      return res.status(404).send({ message: "User not found", status: false });
+    }
+    const forgotPassword = await tokenmodel.create({ email: email, OTP: OTP });
+    console.log(forgotPassword);
+    if (!forgotPassword) {
+      return res.status(500).send({
+        message: "Error generating OTP. Please try again",
+        status: false,
       });
+    }
+    const username = user.username;
+    await forgotpasswordmail(email, username, OTP);
+    res.status(200).send({ message: "Check your mail for OTP", status: true });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 };
+
+const resetPassword = async (req,res, next ) => {
+  try {
+      const {OTP, email, password} = req.body
+      
+      const findOTP = await tokenmodel.findOne({OTP:OTP})
+      const Email = await usermodel.findOne({email});
+      console.log(Email);
+      console.log(findOTP)
+      if(!findOTP){
+          return res.status(404).send({message:"OTP not found. Try again"})
+      }
+      let hashedPassword = await bcryptjs.hash(password, 10);
+      const update = await usermodel.updateOne({email:Email}, {$set:{password:hashedPassword}})
+      if(!update.acknowledged){
+          return res.status(500).send({message:"Error updating password. Try again"})
+      }
+       await tokenmodel.deleteOne({_id:findOTP._id})
+      return res.status(200).send({message:"Password updated successfully", status: true})
+  } catch (error) {
+     console.log(error);
+      next(error)
+  }
+}
+// const groupUpload = async (req, res, next) => {
+//   const { files } = req.body;
+//   const token = req.headers.authorization?.split(" ")[1];
+//   const email = verifyToken(token);
+//   try {
+//     console.log(files);
+//     const result = await cloudinary.uploader.upload(files);
+//     console.log(result);
+//     const image_url = result.secure_url;
+//     const public_id = result.public_id;
+//     const upload = await contributionmodel.updateOne(
+//       { email },
+//       { $set: { image: image_url } }
+//     );
+//     return res
+//       .status(200)
+//       .send({
+//         message: "Upload successful",
+//         status: true,
+//         secure_url: image_url,
+//       });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 module.exports = {
   signup,
@@ -334,4 +398,7 @@ module.exports = {
   verifyuserToken,
   payment,
   getContribution,
+  getallContribution,
+  forgotPassword,
+  resetPassword,
 };
