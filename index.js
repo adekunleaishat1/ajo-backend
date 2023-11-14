@@ -15,6 +15,7 @@ app.use("/user", userrouter)
 
 
 const uri = process.env.MONGODB_URI
+console.log(uri)
 const connect = () => {
     mongoose.set("strictQuery", false)
     mongoose.connect(uri).then((res) => {

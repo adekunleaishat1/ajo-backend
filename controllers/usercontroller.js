@@ -1,4 +1,6 @@
 const usermodel = require("../models/usermodel");
+const notificationmodel = require("../models/notificationmodel");
+const transactionmodel = require("../models/transactionmodel");
 const { cloudinary } = require("../utils/cloudinary");
 const contributionmodel = require("../models/contributionmodel");
 const tokenmodel = require("../models/tokenmodel");
@@ -294,15 +296,34 @@ const payment = async (req, res, next) => {
       });
     }
     const user = await usermodel.findOne({ email });
+    console.log(user, "User on line 299");
     if (!user) {
       return res.status(404).send({ message: "User not found", status: false });
+    }
+    const transaction = await transactionmodel.create({
+      reference: reference,
+      amount: amount / 100,
+      status: paymentResponse.data.data.status,
+      username: user.username,
+      transactiontype: "Credit",
+    });
+    console.log(transaction, "On line 310");
+    if (!transaction) {
+      return res.status(409).send({
+        message: "error making transaction",
+        status: false,
+      });
     }
     const newWallet = user.wallet + amount / 100;
     const result = await usermodel.updateOne(
       { email },
       { $set: { wallet: newWallet } }
     );
-
+    console.log(result);
+    await notificationmodel.create({
+      receiverEmail: `${email}`,
+      message: `Dear ${transaction.username} You have successfully fund your wallet with an amount of  ${transaction.amount}`,
+    });
     return res.status(200).send({
       message: "You have successfully fund your wallet",
       status: true,
@@ -334,36 +355,87 @@ const forgotPassword = async (req, res, next) => {
     }
     const username = user.username;
     await forgotpasswordmail(email, username, OTP);
-    res.status(200).send({ message: "Check your mail for OTP", status: true });
+    res
+      .status(200)
+      .send({ message: "Check your mail for OTP", status: true, OTP: OTP });
   } catch (error) {
     console.log(error);
     next(error);
   }
 };
 
-const resetPassword = async (req,res, next ) => {
+const resetPassword = async (req, res, next) => {
   try {
-      const {OTP, email, password} = req.body
-      
-      const findOTP = await tokenmodel.findOne({OTP:OTP})
-      const Email = await usermodel.findOne({email});
-      console.log(Email);
-      console.log(findOTP)
-      if(!findOTP){
-          return res.status(404).send({message:"OTP not found. Try again"})
-      }
-      let hashedPassword = await bcryptjs.hash(password, 10);
-      const update = await usermodel.updateOne({email:Email}, {$set:{password:hashedPassword}})
-      if(!update.acknowledged){
-          return res.status(500).send({message:"Error updating password. Try again"})
-      }
-       await tokenmodel.deleteOne({_id:findOTP._id})
-      return res.status(200).send({message:"Password updated successfully", status: true})
+    const { OTP, password } = req.body;
+    const findOTP = await tokenmodel.findOne({ OTP: OTP });
+    console.log(findOTP);
+    if (!findOTP) {
+      return res.status(404).send({ message: "OTP not found. Try again" });
+    }
+    let hashedPassword = await bcryptjs.hash(password, 10);
+    const Email = findOTP.email;
+    console.log(Email);
+    const update = await usermodel.updateOne(
+      { email: Email },
+      { $set: { password: hashedPassword } }
+    );
+    if (!update.acknowledged) {
+      return res
+        .status(500)
+        .send({ message: "Error updating password. Try again" });
+    }
+    await tokenmodel.deleteOne({ _id: findOTP._id });
+    return res
+      .status(200)
+      .send({ message: "Password updated successfully", status: true });
   } catch (error) {
-     console.log(error);
-      next(error)
+    console.log(error);
+    next(error);
   }
-}
+};
+const updatenotification = async (req, res, next) => {
+  try {
+    const {isread} = req.body
+    const token = req.headers.authorization?.split(" ")[1];
+    const email = verifyToken(token);
+    const update = await notificationmodel.updateManyn({receiverEmail: email}, {$set: {isread: isread}})
+     if (!update) {
+      return res.status(402).send({message:"error ocurred when updating notification", status: false})
+     }
+    
+     return res.status(200).send({message: "update successful", status: true})
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+const viewnotification = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    const email = verifyToken(token);
+    const notify = await notificationmodel.find({ receiverEmail: email });
+    if (!notify) {
+      return res.status(404).send({
+        message: "No notification found",
+        status: false,
+      });
+    }
+    if (notify.length == 0) {
+      return res.status(409).send({ message: "No notification found" });
+    }
+    
+    return res
+      .status(200)
+      .send({
+        message: "Notification fetched successful",
+        status: true,
+        notify,
+      });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
 // const groupUpload = async (req, res, next) => {
 //   const { files } = req.body;
 //   const token = req.headers.authorization?.split(" ")[1];
@@ -401,4 +473,6 @@ module.exports = {
   getallContribution,
   forgotPassword,
   resetPassword,
+  viewnotification,
+  updatenotification
 };
