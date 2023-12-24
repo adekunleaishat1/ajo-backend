@@ -117,7 +117,7 @@ const contributor_signup = async (req, res, next) => {
     return res.status(202).send({
       message: "Contribution created successfully",
       status: true,
-      contributionLink,
+      contributionLink, 
     });
   } catch (error) {
     console.log(error);
@@ -398,7 +398,7 @@ const updatenotification = async (req, res, next) => {
     const {isread} = req.body
     const token = req.headers.authorization?.split(" ")[1];
     const email = verifyToken(token);
-    const update = await notificationmodel.updateManyn({receiverEmail: email}, {$set: {isread: isread}})
+    const update = await notificationmodel.updateMany ({receiverEmail: email}, {$set: {isread: isread}})
      if (!update) {
       return res.status(402).send({message:"error ocurred when updating notification", status: false})
      }
