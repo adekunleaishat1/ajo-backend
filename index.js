@@ -3,12 +3,14 @@ require("dotenv").config()
 const mongoose =require("mongoose");
 const userrouter = require("./routes/userrouter")
 const cors = require('cors');
+const bodyparser = require("body-parser")
 const {errorhandler} = require("./middlewares/errorhandler")
 
 
 const app = express();
 app.use(express.json());
 app.use(cors({origin:"*"}))
+app.use(bodyParser.urlencoded({ extended: false }))
 app.use("/user", userrouter)
  
 
