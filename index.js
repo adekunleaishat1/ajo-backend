@@ -3,16 +3,15 @@ require("dotenv").config()
 const mongoose =require("mongoose");
 const userrouter = require("./routes/userrouter")
 const cors = require('cors');
-const bodyparser = require("body-parser")
+const bodyParser = require("body-parser")
 const {errorhandler} = require("./middlewares/errorhandler")
 
 
 const app = express();
 app.use(express.json());
 app.use(cors({origin:"*"}))
-app.use(bodyparser.urlencoded({ extended: false }))
-app.use(bodyparser.json({ limit: '100mb' }))
-app.use(bodyparser.urlencoded({ extended: true, limit:"100mb" }));
+app.use(bodyParser.json({ limit: '100mb' }))
+app.use(bodyParser.urlencoded({ extended: true, limit:"100mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: "*" }))
 app.use("/user", userrouter)
