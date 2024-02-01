@@ -254,6 +254,16 @@ const verifythriftLink = async (req, res, next) => {
           status: false,
         });
       }
+      const member = await contributionmodel.findOne({
+        "members": {
+          $elemMatch: {
+            "username": checkUser.username
+          }
+        }
+      })
+      if (member) {
+        return res.status(404).send({message: "User already exist in the thrift", status: false})
+      }
       // const user = await usermodel.findOne({ username });
       // if (!user) {
       //   return res.redirect(302, "/signup");
