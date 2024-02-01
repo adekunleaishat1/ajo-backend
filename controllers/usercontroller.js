@@ -228,15 +228,19 @@ const verifyuserToken = async (req, res, next) => {
     next(error);
   }
 };
-const verifytokenLink =
-  ("/contribution/:token",
-  async (req, res, next) => {
+const verifythriftLink = async (req, res, next) => {
     try {
-      const contributionToken = req.params.token;
-      const { username } = req.body;
-
+      const token = req.headers.authorization.split(" ")[1]
+      const useremail = verifyToken(token)
+      console.log(useremail);
+      const checkUser = await usermodel.findOne({ email: userEmail });
+      if (!checkUser) {
+        return res.redirect(302, "/signup");
+        // return res.status(402).send({ message: "unauthorized", status: false });
+      }
+      const contributionid = req.params.id;
       const contribution = await contributionmodel.findOne({
-        token: contributionToken,
+        _id: contributionid,
       });
       if (!contribution) {
         return res
@@ -249,11 +253,11 @@ const verifytokenLink =
           status: false,
         });
       }
-      const user = await usermodel.findOne({ username });
-      if (!user) {
-        return res.redirect(302, "/signup");
-        // return res.status(404).send({ message: "User not found or invalid username", status: false });
-      }
+      // const user = await usermodel.findOne({ username });
+      // if (!user) {
+      //   return res.redirect(302, "/signup");
+      //   // return res.status(404).send({ message: "User not found or invalid username", status: false });
+      // }
 
       contribution.members.push({ username: username, amount: 0 });
       contribution.peopleJoined++;
@@ -266,7 +270,7 @@ const verifytokenLink =
       console.log(error);
       next(error);
     }
-  });
+  };
 
 const payment = async (req, res, next) => {
   const { reference, amount } = req.body;
@@ -466,7 +470,7 @@ module.exports = {
   signup,
   signin,
   contributor_signup,
-  verifytokenLink,
+  verifythriftLink,
   verifyuserToken,
   payment,
   getContribution,
