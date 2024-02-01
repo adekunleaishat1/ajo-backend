@@ -233,7 +233,8 @@ const verifythriftLink = async (req, res, next) => {
       const token = req.headers.authorization.split(" ")[1]
       const useremail = verifyToken(token)
       console.log(useremail);
-      const checkUser = await usermodel.findOne({ email: userEmail });
+      const checkUser = await usermodel.findOne({ email: useremail });
+      console.log(checkUser.username);
       if (!checkUser) {
         return res.redirect(302, "/signup");
         // return res.status(402).send({ message: "unauthorized", status: false });
@@ -259,7 +260,7 @@ const verifythriftLink = async (req, res, next) => {
       //   // return res.status(404).send({ message: "User not found or invalid username", status: false });
       // }
 
-      contribution.members.push({ username: username, amount: 0 });
+      contribution.members.push({ username: checkUser.username, amount: 0 });
       contribution.peopleJoined++;
       await contribution.save();
 
