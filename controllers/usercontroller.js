@@ -283,11 +283,43 @@ const verifythriftLink = async (req, res, next) => {
     }
   };
 
+  const initializepayment = async (req, res, next)=>{
+    const {amount, email, name} = req.body
+    const token = req.headers.authorization?.split(" ")[1];
+    const useremail = verifyToken(token);
+    try {
+      const initializeresponse = await axios.post('https://api.paystack.co/transaction/initialize',{
+      email: email,
+      amount: amount,
+      name: name
+    },
+      {
+        headers: {
+          authorization: `Bearer ${paystackSecret}`,
+          "content-type": "application/json",
+          "cache-control": "no control",
+        },
+      }
+      )
+      if(!initializeresponse.data.status){
+        return res.status(401).send({message:"authurization failed",status:false})
+      }
+      return res.status(200).send({message:"authorization successful",status:true, data:initializeresponse.data.data})
+
+    } catch (error) {
+      console.log(error);
+      next(error)
+    }
+  }
+
 const payment = async (req, res, next) => {
-  const { reference, amount } = req.body;
+  const { reference} = req.body;
   const token = req.headers.authorization?.split(" ")[1];
   const email = verifyToken(token);
   try {
+    if (reference === "") {
+      return res.status(404).send({message:"reference is required", status: false})
+    }
     const paymentResponse = await axios.get(
       `https://api.paystack.co/transaction/verify/${reference}`,
       {
@@ -299,12 +331,10 @@ const payment = async (req, res, next) => {
       }
     );
 
-    console.log(paymentResponse.data);
+    console.log(paymentResponse.data, "line 331");
 
-    if (
-      paymentResponse.data.data.status !== "success" ||
-      paymentResponse.data.data.amount !== amount
-    ) {
+    if ( paymentResponse.data.data.status !== "success") 
+      {
       return res.status(402).send({
         message: "Payment required, Please complete this payment ",
         status: false,
@@ -317,7 +347,7 @@ const payment = async (req, res, next) => {
     }
     const transaction = await transactionmodel.create({
       reference: reference,
-      amount: amount / 100,
+      amount: paymentResponse.data.data.amount  / 100,
       status: paymentResponse.data.data.status,
       username: user.username,
       transactiontype: "Credit",
@@ -329,7 +359,7 @@ const payment = async (req, res, next) => {
         status: false,
       });
     }
-    const newWallet = user.wallet + amount / 100;
+    const newWallet = user.wallet + paymentResponse.data.data.amount / 100;
     const result = await usermodel.updateOne(
       { email },
       { $set: { wallet: newWallet } }
@@ -489,5 +519,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   viewnotification,
-  updatenotification
+  updatenotification,
+  initializepayment
 };
