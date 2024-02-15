@@ -330,7 +330,7 @@ const payment = async (req, res, next) => {
     if ( paymentResponse.data.data.status !== "success") 
       {
       return res.status(402).send({
-        message: "Payment required, Please complete this payment ",
+        message: "oops , Payment not completed ",
         status: false,
       });
     }
