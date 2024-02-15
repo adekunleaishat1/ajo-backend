@@ -264,12 +264,6 @@ const verifythriftLink = async (req, res, next) => {
       if (member) {
         return res.status(404).send({message: "User already exist in the thrift", status: false})
       }
-      // const user = await usermodel.findOne({ username });
-      // if (!user) {
-      //   return res.redirect(302, "/signup");
-      //   // return res.status(404).send({ message: "User not found or invalid username", status: false });
-      // }
-
       contribution.members.push({ username: checkUser.username, amount: 0 });
       contribution.peopleJoined++;
       await contribution.save();
