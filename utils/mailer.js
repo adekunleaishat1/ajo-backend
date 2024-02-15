@@ -17,8 +17,8 @@ const forgotpasswordmail = async (email, username, OTP) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "aishatadekunle877@gmail.com",
-      pass: "ovucimfpifzkjtfl",
+      user: "unityfund877@gmail.com",
+      pass: "rsqusxwcoswlqwyt",
     },
   });
 
