@@ -17,13 +17,13 @@ const forgotpasswordmail = async (email, username, OTP) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "unityfund877@gmail.com",
-      pass: "rsqusxwcoswlqwyt",
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
     },
   });
 
   const mailOptions = {
-    from: "aishatadekunle877@gmail.com",
+    from: process.env.EMAIL_USER,
     to: email,
     subject: "Registration message",
     text: "Test App",
