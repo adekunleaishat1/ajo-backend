@@ -11,6 +11,9 @@ const paystack = require("paystack");
 const axios = require("axios");
 const { generateCode } = require("../utils/generator");
 const { forgotpasswordmail } = require("../utils/mailer");
+const { assign } = require("nodemailer/lib/shared");
+const e = require("cors");
+const cron = require('node-cron')
 
 const signup = async (req, res, next) => {
   try {
@@ -148,14 +151,26 @@ const getContribution = async (req, res, next) => {
 const getallContribution = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
+    if(!token) {
+    res.status(401).send({
+        message: "No token provided",
+        status: false,
+      });
+    }
     const email = verifyToken(token);
+    if (!email) {
+      res.status(402).send({
+        message: "Invalid token",
+        status: false,
+      });
+    }
     const Allcontribution = await contributionmodel.find({
       admin: email,
     });
     console.log(Allcontribution);
     if (Allcontribution.length === 0) {
       return res
-        .status(200)
+        .status(405)
         .send({ message: "No contribution found", status: false });
     }
     return res.status(200).send({
@@ -475,6 +490,71 @@ const viewnotification = async (req, res, next) => {
     next(error);
   }
 };
+
+const deductuserwalet = async (username, amount, thriftId) =>{
+   try {
+   const user =  await usermodel.findOne({username: username})
+   const thrift = await contributionmodel.findById({_id: thriftId})
+   if (user && thrift) {
+      user.wallet -= amount
+      await user.save();
+      console.log(`Deduction of ${amount} successful for ${username}`);
+      thrift.wallet += amount
+      await thrift.save()
+   }else{
+    console.log("user is not found");
+   }
+   } catch (error) {
+    
+   }
+}
+// setInterval(async () => {
+//   try {
+//     const contribution = await contributionmodel.find()
+//      for (let i = 0; i < contribution.length; i++) {
+//       const element = contribution[i];
+//       console.log(element, "onecontribution");
+//        if (element.peopleJoined == element.nopeople) {
+//            if (element.plan == "monthly") {
+//               element.member.forEach(member => {
+//                 deductuserwalet(member.username, element.amount, element._id) 
+//               });
+//            }
+//        }
+      
+//      }
+    
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }, [86400000]);
+const thriftpayment = async(plan) =>{
+    const contribution = await contributionmodel.find({plan:plan})
+    if (contribution) {
+      for (let i = 0; i < contribution.length; i++) {
+        const element = contribution[i];
+        console.log(element);
+        if (element.peopleJoined == element.nopeople ) {
+          element.member.forEach(member => {
+            deductuserwalet(member.username, element.amount, element._id) 
+          });
+        }
+      }
+    }
+
+}
+cron.schedule(`0 0 ${time} * * *'`, () => {
+  console.log('Processing daily contributions at 8:00 AM');
+   thriftpayment('daily');
+});
+cron.schedule('0 0 8 * * 1', () => {
+  console.log('Processing weekly contributions at 8:00 AM on Monday');
+  thriftpayment('weekly');
+});
+cron.schedule('0 0 8 1 * *', () => {
+  console.log('Processing monthly contributions at 8:00 AM on the 1st day of the month');
+   thriftpayment('monthly');
+});
 
 // const groupUpload = async (req, res, next) => {
 //   const { files } = req.body;

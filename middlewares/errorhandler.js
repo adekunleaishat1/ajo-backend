@@ -5,7 +5,10 @@ const errorhandler = (error, req, res, next)=> {
         }
     }else if(error.name == "Authentication error"){
         return res.status(401).send({message: error.message || "Authentication error", staus:"false"})
-    }else if(error.name == "Authorization error"){
+    } else if (error.name === "TokenExpiredError") {
+        return res.status(401).send({message: "Token has expired", status: "false"});
+    }
+    else if(error.name == "Authorization error"){
         return res.status(403).send({message: error.message ||"Authorization error", staus:"false"})
     }else {
         return res.status(500).send({message:"internal server error", staus:"false"})

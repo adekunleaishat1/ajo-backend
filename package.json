@@ -21,6 +21,7 @@
     "formik": "^2.4.2",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.3.1",
+    "node-cron": "^3.0.3",
     "nodemailer": "^6.9.5",
     "nodemon": "^2.0.22",
     "paystack": "^2.0.1",
