@@ -543,7 +543,7 @@ const thriftpayment = async(plan) =>{
     }
 
 }
-cron.schedule(`0 0 ${time} * * *'`, () => {
+cron.schedule(`0 0 8 * * *'`, () => {
   console.log('Processing daily contributions at 8:00 AM');
    thriftpayment('daily');
 });
