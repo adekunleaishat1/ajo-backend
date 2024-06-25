@@ -157,6 +157,7 @@ const getallContribution = async (req, res, next) => {
         status: false,
       });
     }
+    console.log(token);
     const email = verifyToken(token);
     if (!email) {
       res.status(402).send({
@@ -556,31 +557,6 @@ cron.schedule('0 0 8 1 * *', () => {
    thriftpayment('monthly');
 });
 
-// const groupUpload = async (req, res, next) => {
-//   const { files } = req.body;
-//   const token = req.headers.authorization?.split(" ")[1];
-//   const email = verifyToken(token);
-//   try {
-//     console.log(files);
-//     const result = await cloudinary.uploader.upload(files);
-//     console.log(result);
-//     const image_url = result.secure_url;
-//     const public_id = result.public_id;
-//     const upload = await contributionmodel.updateOne(
-//       { email },
-//       { $set: { image: image_url } }
-//     );
-//     return res
-//       .status(200)
-//       .send({
-//         message: "Upload successful",
-//         status: true,
-//         secure_url: image_url,
-//       });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 
 module.exports = {
   signup,
