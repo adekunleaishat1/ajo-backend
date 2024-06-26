@@ -14,7 +14,8 @@ const {errorhandler} = require("./middlewares/errorhandler")
 
 const app = express();
 app.use(express.json());
-app.use(cors({origin:"https://ajo-frontend-teal.vercel.app"}))
+// app.use(cors({origin:"https://ajo-frontend-teal.vercel.app"}))
+app.use(cors({origin:"*"}))
 app.use(bodyParser.json({ limit: '100mb' }))
 app.use(bodyParser.urlencoded({ extended: true, limit:"100mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -42,7 +43,8 @@ app.use(errorhandler)
   console.log("server started at 8888");
 })
 const io = socket(connection, {
-    cors:{origin:"https://ajo-frontend-teal.vercel.app"}
+    // cors:{origin:"https://ajo-frontend-teal.vercel.app"}
+    cors:{origin:"*"}
 })
 
 io.on("connection",(socket)=>{
