@@ -14,7 +14,7 @@ const {errorhandler} = require("./middlewares/errorhandler")
 
 const app = express();
 app.use(express.json());
-app.use(cors({origin:"*"}))
+app.use(cors({origin:process.env.ENDPIONT}))
 app.use(bodyParser.json({ limit: '100mb' }))
 app.use(bodyParser.urlencoded({ extended: true, limit:"100mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -43,7 +43,7 @@ app.use(errorhandler)
   console.log("server started at 8888");
 })
 const io = socket(connection, {
-    cors:{origin:"*"}
+    cors:{origin:process.env.ENDPIONT}
 })
 
 io.on("connection",(socket)=>{
