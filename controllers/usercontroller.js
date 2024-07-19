@@ -151,34 +151,30 @@ const getContribution = async (req, res, next) => {
 const getallContribution = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-    if(!token) {
-    res.status(401).send({
-        message: "No token provided",
-        status: false,
-      });
-    }
     console.log(token);
     const email = verifyToken(token);
-    if (!email) {
-      res.status(402).send({
-        message: "Invalid token",
-        status: false,
-      });
+    const checkUser = await usermodel.findOne({email});
+
+    if (!token) {
+         res.status(401).send({ message: "No token provided", status: false,  });
+
+    }else if(!email){
+
+      res.status(402).send({  message: "Invalid token",status: false,  });
+    }else{
+      const Allcontribution = await contributionmodel.find(
+        {"members": {
+          $elemMatch: { "username": checkUser.username }
+        }
+        });
+      console.log(Allcontribution);
+      if (Allcontribution.length === 0) {
+        return res.status(405).send({ message: "No contribution found", status: false });
+      }
+
+      return res.status(200).send({ message: "contribution fetched successfully",Allcontribution,status: true, });
     }
-    const Allcontribution = await contributionmodel.find({
-      admin: email,
-    });
-    console.log(Allcontribution);
-    if (Allcontribution.length === 0) {
-      return res
-        .status(405)
-        .send({ message: "No contribution found", status: false });
-    }
-    return res.status(200).send({
-      message: "contribution fetched successfully",
-      Allcontribution,
-      status: true,
-    });
+   
   } catch (error) {
     console.log(error);
     next(error);
@@ -248,45 +244,48 @@ const verifythriftLink = async (req, res, next) => {
     try {
       const token = req.headers.authorization.split(" ")[1]
       const useremail = verifyToken(token)
-      console.log(useremail);
-      const checkUser = await usermodel.findOne({ email: useremail });
-      console.log(checkUser.username);
-      if (!checkUser) {
-        return res.redirect(302, "/signup");
-        // return res.status(402).send({ message: "unauthorized", status: false });
-      }
-      const contributionid = req.params.id;
-      const contribution = await contributionmodel.findOne({
-        _id: contributionid,
-      });
-      if (!contribution) {
-        return res
-          .status(402)
-          .send({ message: "The link is not valid", status: false });
-      }
-      if (contribution.peopleJoined >= contribution.nopeople) {
-        return res.status(403).send({
-          message: "Thrift is full, the link is no longer valid",
-          status: false,
-        });
-      }
-      const member = await contributionmodel.findOne({
-        "members": {
-          $elemMatch: {
-            "username": checkUser.username
-          }
-        }
-      })
-      if (member) {
-        return res.status(404).send({message: "User already exist in the thrift", status: false})
-      }
-      contribution.members.push({ username: checkUser.username, amount: 0 });
-      contribution.peopleJoined++;
-      await contribution.save();
 
-      return res
-        .status(200)
-        .send({ messsage: "Token verified successfully", status: true });
+      const checkUser = await usermodel.findOne({ email: useremail });
+
+      if (!checkUser) {
+
+        return res.status(402).send({ message: "unauthorized", status: false });
+      }else{
+        const contributionid = req.params.id;
+        const contribution = await contributionmodel.findOne({
+
+          _id: contributionid,
+        });
+        const member = await contributionmodel.findOne({
+          "members": {
+            $elemMatch: {
+              "username": checkUser.username
+            }
+          }
+        })
+        if (!contribution) {
+          return res
+            .status(402)
+            .send({ message: "The link is not valid", status: false });
+        }
+       else if (contribution.peopleJoined >= contribution.nopeople) {
+          return res.status(403).send({
+            message: "Thrift is full, the link is no longer valid",
+            status: false,
+          });
+        } else if(member) {
+
+          return res.status(404).send({message: "User already exist in the thrift", status: false})
+
+        }else{
+          contribution.members.push({ username: checkUser.username, amount: 0 });
+          contribution.peopleJoined++;
+          await contribution.save();
+    
+          return res .status(200) .send({ messsage: "Token verified successfully", status: true , });
+        }  
+      }
+     
     } catch (error) {
       console.log(error);
       next(error);
