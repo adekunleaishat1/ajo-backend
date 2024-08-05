@@ -14,6 +14,7 @@ const { forgotpasswordmail } = require("../utils/mailer");
 const { assign } = require("nodemailer/lib/shared");
 const e = require("cors");
 const cron = require('node-cron')
+const {io} = require('../index')
 
 const signup = async (req, res, next) => {
   try {
@@ -477,6 +478,10 @@ const viewnotification = async (req, res, next) => {
     if (notify.length == 0) {
       return res.status(409).send({ message: "No notification found" });
     }
+    io.to(email).emit("notification", {
+      message: "Notification fetched successfully",
+      notify
+    });
     
     return res
       .status(200)
