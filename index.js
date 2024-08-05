@@ -44,4 +44,5 @@ const io = socket(connection, {
 })
 
 module.exports = {io}
+require('./middlewares/socket')
 
