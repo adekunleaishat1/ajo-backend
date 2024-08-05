@@ -1,7 +1,7 @@
 const {io} = require('../index')
 const chatmodel = require("../models/chatmodel")
 const usermodel = require("../models/usermodel")
-const {verifyToken} = require("./services/sessionservices")
+const {verifyToken} = require("../services/sessionservices")
 
 io.on("connection",(socket)=>{
     let useremail = ""
