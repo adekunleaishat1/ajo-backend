@@ -479,6 +479,8 @@ const viewnotification = async (req, res, next) => {
       return res.status(409).send({ message: "No notification found" });
     }
     const io = req.app.get('io');
+    console.log(io);
+    
     io.to(email).emit('notification', {
       message: 'Notification fetched successfully',
       notify,

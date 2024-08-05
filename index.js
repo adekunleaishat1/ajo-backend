@@ -43,6 +43,8 @@ const io = socket(connection, {
     cors:{origin:"*"}
 })
 app.set('io', io);
-module.exports = {io}
+
 require('./middlewares/socket')
+
+module.exports = {io}
 
