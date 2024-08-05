@@ -42,7 +42,7 @@ const io = socket(connection, {
     // cors:{origin:"https://ajo-frontend-teal.vercel.app"}
     cors:{origin:"*"}
 })
-
+app.set('io', io);
 module.exports = {io}
 require('./middlewares/socket')
 
