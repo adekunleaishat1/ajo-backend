@@ -39,7 +39,12 @@ app.use(errorhandler)
   console.log("server started at 8888");
 })
 const io = socket(connection, {
-    cors:{origin:"https://ajo-frontend-teal.vercel.app"}
+    cors:{
+        origin:"https://ajo-frontend-teal.vercel.app",
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Authorization"],
+        credentials: true
+    }
     // cors:{origin:"*"}
 })
 app.set('io', io);
