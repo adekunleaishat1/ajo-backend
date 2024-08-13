@@ -481,14 +481,11 @@ const viewnotification = async (req, res, next) => {
     const io = req.app.get('io');
     console.log(io, "notification io");
     
-  let socketno =  await  io.to(email).emit('notification', {
+    await io.to(email).emit('notification', {
       message: 'Notification fetched successfully',
       notify,
     });
-
-    if (!socketno) {
-      console.log("socket not working ");
-    }
+    console.log(`Notification sent to ${email}`);
 
     console.log(socketno, "socket is working");
     return res
