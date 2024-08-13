@@ -502,10 +502,17 @@ const updateDeductionTime = async (req, res) => {
   const {contributionId, newTime} = req.body
 
   try {
-    await contributionmodel.findByIdAndUpdate(contributionId, { deductionTime: newTime });
-    console.log('Deduction time updated successfully');
+   const timeupdate = await contributionmodel.findByIdAndUpdate(contributionId, { deductionTime: newTime });
+   if (!timeupdate) {
+    return res.status(409).send({ message: "Thrift not found", status:false });
+   }
+   return res.status(200).send({
+        message: 'Deduction time updated successfully',
+        status: true,
+      });
   } catch (error) {
-    console.log('Error updating deduction time:', error);
+    console.log('Error updating deduction time:', error.message);
+    return res.status(500).send({ message: `Error updating deduction time: ${error.message}`, status:false });
   }
 };
 
