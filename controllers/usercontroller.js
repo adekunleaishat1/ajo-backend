@@ -486,8 +486,6 @@ const viewnotification = async (req, res, next) => {
       notify,
     });
     console.log(`Notification sent to ${email}`);
-
-    console.log(socketno, "socket is working");
     return res
       .status(200)
       .send({
