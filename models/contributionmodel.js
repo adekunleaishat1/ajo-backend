@@ -16,6 +16,7 @@ const contributionSchema = new mongoose.Schema({
     admin: { type: String, trim: true },
     wallet: {type:Number, default:0.00},
     image: { type: String , required:true},
+    deductionTime: { type: String }
 },{timestamps:true})
 
  

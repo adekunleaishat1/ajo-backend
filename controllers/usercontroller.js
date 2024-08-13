@@ -498,6 +498,16 @@ const viewnotification = async (req, res, next) => {
     next(error);
   }
 };
+const updateDeductionTime = async (req, res) => {
+  const {contributionId, newTime} = req.body
+
+  try {
+    await contributionmodel.findByIdAndUpdate(contributionId, { deductionTime: newTime });
+    console.log('Deduction time updated successfully');
+  } catch (error) {
+    console.log('Error updating deduction time:', error);
+  }
+};
 
 const deductuserwalet = async (username, amount, thriftId) =>{
    try {
@@ -536,6 +546,7 @@ const deductuserwalet = async (username, amount, thriftId) =>{
 //     console.log(error);
 //   }
 // }, [86400000]);
+
 const thriftpayment = async(plan) =>{
     const contribution = await contributionmodel.find({plan:plan})
     if (contribution) {
@@ -578,5 +589,6 @@ module.exports = {
   resetPassword,
   viewnotification,
   updatenotification,
-  initializepayment
+  initializepayment,
+  updateDeductionTime,
 };

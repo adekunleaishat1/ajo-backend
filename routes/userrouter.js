@@ -1,6 +1,6 @@
 const express = require("express")
 const {validate} = require("../middlewares/validator")
-const {signup, signin, contributor_signup, verifythriftLink, verifyuserToken, payment, getContribution, getallContribution, forgotPassword,resetPassword,viewnotification, updatenotification,  initializepayment} = require("../controllers/usercontroller")
+const {signup, signin, contributor_signup, verifythriftLink, verifyuserToken, payment, getContribution, getallContribution, forgotPassword,resetPassword,viewnotification, updatenotification,  initializepayment, updateDeductionTime} = require("../controllers/usercontroller")
 const {userValidationschema,contributionValidationschema} = require("../middlewares/userValidationschema")  
 
 const userrouter = express.Router()
@@ -18,5 +18,6 @@ userrouter.post("/reset", forgotPassword)
 userrouter.post("/change", resetPassword)
 userrouter.get("/notify", viewnotification)
 userrouter.post("/update", updatenotification)
+userrouter.post("/gettime", updateDeductionTime)
 
 module.exports = userrouter
