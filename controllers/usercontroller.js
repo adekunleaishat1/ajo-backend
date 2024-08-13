@@ -490,7 +490,7 @@ const viewnotification = async (req, res, next) => {
       console.log("socket not working ");
     }
 
-    console.log(socketno);
+    console.log(socketno, "socket is working");
     return res
       .status(200)
       .send({
