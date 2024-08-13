@@ -486,9 +486,11 @@ const viewnotification = async (req, res, next) => {
       notify,
     });
 
-    console.log(socketno);
+    if (!socketno) {
+      console.log("socket not working ");
+    }
 
-    
+    console.log(socketno);
     return res
       .status(200)
       .send({
